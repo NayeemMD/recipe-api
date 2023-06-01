@@ -45,6 +45,8 @@ public class RecipeController {
             @ApiResponse(responseCode = "400", description = "Bad request")
     })
     public ResponseEntity<RecipeDTO> addRecipe(@RequestBody @Valid RecipeRequest recipe) {
+        log.info("Add request for recipe name: {} by author: {}", recipe.getName(), recipe.getAuthor());
+
         validator.validate(recipe);
         Recipe createdRecipe = recipeService.upsertRecipe(map(recipe), Optional.empty());
         return ResponseEntity.status(HttpStatus.CREATED).body(map(createdRecipe));
@@ -59,6 +61,8 @@ public class RecipeController {
     })
     public ResponseEntity<RecipeDTO> updateRecipe(@PathVariable int id,
                                                   @RequestBody @Valid RecipeRequest recipe) {
+        log.info("Update request for recipe name: {} by author: {}", recipe.getName(), recipe.getAuthor());
+
         validator.validate(id, recipe.getAuthor());
         Recipe updatedRecipe = recipeService.upsertRecipe(map(recipe), Optional.of(id));
         return ok(map(updatedRecipe));
@@ -73,6 +77,8 @@ public class RecipeController {
     })
     public ResponseEntity<Void> deleteRecipe(@PathVariable int id,
                                              @RequestBody @Valid Author author) {
+        log.info("delete request for recipe id: {} by author: {}", id, author);
+
         validator.validate(id, author);
         recipeService.deleteRecipe(id);
         return noContent().build();
@@ -86,6 +92,8 @@ public class RecipeController {
             @ApiResponse(responseCode = "404", description = "Recipe not found")
     })
     public ResponseEntity<RecipeDTO> getRecipeById(@PathVariable int id) {
+        log.info("get request for recipe id: {} ", id);
+
         validator.validate(id);
         Recipe recipe = recipeService.getRecipeById(id);
         return ok(map(recipe));
@@ -96,13 +104,17 @@ public class RecipeController {
     public PageRecipeDTO getAllRecipes(
             @RequestParam(defaultValue = "0") int pageNumber,
             @RequestParam(defaultValue = "10") int limit) {
+        log.info("get all with page request for page number: {}, limit: {} ", pageNumber, limit);
+
         Page<Recipe> recipes = recipeService.getAllRecipes(pageNumber, limit);
         return map(recipes);
     }
 
     @GetMapping(value = "/search", produces = COM_FOOD_RECIPE_V1_JSON)
     @Operation(summary = "Search recipes")
-    public ResponseEntity<List<RecipeDTO>> searchRecipes( @RequestBody @Valid RecipeSearchRequest request) {
+    public ResponseEntity<List<RecipeDTO>> searchRecipes(@RequestBody @Valid RecipeSearchRequest request) {
+        log.info("search request received");
+
         List<Recipe> filteredRecipes = recipeService.searchRecipes(map(request));
         return ok(map(filteredRecipes));
     }

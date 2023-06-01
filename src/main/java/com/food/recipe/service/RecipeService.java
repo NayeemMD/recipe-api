@@ -22,12 +22,26 @@ import java.util.stream.Collectors;
 
 import static com.food.recipe.mapper.ModelToEntityMapper.map;
 
+/**
+ * <b>RecipeService</b> recipe service class holds all the business logic need
+ * Make sure this class never directly interacts with dto objects, and neither access with entities details directly without mapping
+ * This is to allow abstraction of layers.
+ * Have this service clean from validations as well
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class RecipeService {
     private final DataService dataService;
 
+    /**
+     * Upserts - add or update for given details, if recipeId is found then considered to update
+     * Transactional because it updates various tables in the background
+     *
+     * @param recipe           recipe details
+     * @param reciepIdOptional in case of update recipe id exists or else optional of empty
+     * @return created recipe with id
+     */
     @Transactional
     public Recipe upsertRecipe(Recipe recipe, Optional<Integer> reciepIdOptional) {
         AuthorEntity authorEntity = dataService.getOrElseCreate(recipe.getAuthor());
@@ -38,14 +52,32 @@ public class RecipeService {
         return recipe;
     }
 
+    /**
+     * Delete the recipe details for given recipe Id.
+     * Transactional because it updates various tables in the background
+     * @param id recipe id
+     */
+    @Transactional
     public void deleteRecipe(int id) {
         dataService.deleteRecipeDetails(id);
     }
 
+    /**
+     * Gets the recipe details for given id
+     * @param id recipe id
+     * @return recipe model
+     */
     public Recipe getRecipeById(int id) {
         List<RecipeIngredientEntity> recipeDetails = dataService.getRecipeDetailsByRecipeId(id);
         return map(recipeDetails);
     }
+
+    /**
+     *
+     * @param pageNumber querying page number
+     * @param limit per page items
+     * @return page with recipe details
+     */
 
     public Page<Recipe> getAllRecipes(int pageNumber, int limit) {
         PageRequest pageRequest = PageRequest.of(pageNumber, limit);
@@ -55,7 +87,7 @@ public class RecipeService {
     }
 
     private Map<RecipeEntity, List<IngredientEntity>> getRecipeEntityListMap(Set<RecipeEntity> recipeEntities) {
-       return recipeEntities.stream()
+        return recipeEntities.stream()
                 .collect(Collectors.groupingBy(
                         recipeEntity -> recipeEntity,
                         Collectors.mapping(
@@ -65,6 +97,14 @@ public class RecipeService {
                 ));
     }
 
+    /**
+     * Searches the recipe details by given details
+     * Uses fork and join principle for performing the operations to avoid joins and complicaitons with specification combinations
+     * Uses Specification pattern for searching the details
+     * It can further update as page results as well. For now considering it as tech debt.
+     * @param recipeSearch search criteria
+     * @return founded list of recipes
+     */
     public List<Recipe> searchRecipes(RecipeSearch recipeSearch) {
         //can be parallelized and still get benefited
         List<RecipeEntity> recipeResults = getRecipeResults(recipeSearch.getSearchCriteriaList());
@@ -73,7 +113,7 @@ public class RecipeService {
         Set<RecipeEntity> finalResults = new HashSet<>(recipeResults);
 
         //join the results
-        if(recipeSearch.getOperator() == SearchOperator.AND) {
+        if (recipeSearch.getOperator() == SearchOperator.AND) {
             retainAll(authorResults, finalResults);
             retainAll(ingredientResults, finalResults);
         } else {
@@ -85,9 +125,9 @@ public class RecipeService {
     }
 
     private static void retainAll(List<RecipeEntity> incoming, Set<RecipeEntity> finalResults) {
-        if(!incoming.isEmpty() && !finalResults.isEmpty())
+        if (!incoming.isEmpty() && !finalResults.isEmpty())
             finalResults.retainAll(incoming);
-        if(finalResults.isEmpty() && !incoming.isEmpty())
+        if (finalResults.isEmpty() && !incoming.isEmpty())
             finalResults.addAll(incoming);
     }
 
@@ -96,7 +136,7 @@ public class RecipeService {
                 .filter(searchCriteria -> searchCriteria.property().name().contains("INGREDIENT"))
                 .toList();
 
-        if(recipeSearchList.isEmpty()) return Collections.emptyList();
+        if (recipeSearchList.isEmpty()) return Collections.emptyList();
 
         SpecificationBuilder<IngredientEntity> builder = new SpecificationBuilder<>();
         Specification<IngredientEntity> specification = builder.build(recipeSearchList);
@@ -111,7 +151,7 @@ public class RecipeService {
                 .filter(searchCriteria -> searchCriteria.property().name().contains("AUTHOR"))
                 .toList();
 
-        if(recipeSearchList.isEmpty()) return Collections.emptyList();
+        if (recipeSearchList.isEmpty()) return Collections.emptyList();
 
         SpecificationBuilder<AuthorEntity> builder = new SpecificationBuilder<>();
         Specification<AuthorEntity> specification = builder.build(recipeSearchList);
@@ -125,7 +165,7 @@ public class RecipeService {
                 .filter(searchCriteria -> !searchCriteria.property().name().contains("_"))
                 .toList();
 
-        if(recipeSearchList.isEmpty()) return Collections.emptyList();
+        if (recipeSearchList.isEmpty()) return Collections.emptyList();
 
         SpecificationBuilder<RecipeEntity> builder = new SpecificationBuilder<>();
         Specification<RecipeEntity> specification = builder.build(recipeSearchList);
