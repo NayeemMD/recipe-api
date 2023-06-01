@@ -1,0 +1,59 @@
+plugins {
+    id 'groovy'
+}
+
+group = 'com.food.recipe'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+
+ext {
+    spockVersion = '2.3-groovy-4.0'
+    groovyVersion = '4.0.9'
+    springVersion = '5.3.3'
+    groovyHttpVersion = '0.7.1'
+    springWebFluxVersion = '5.3.20'
+    nettyVersion = '1.0.19'
+    reactorVersion = '3.4.18'
+    jacksonVersion = '2.14.2'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+dependencies {
+    // Logging
+    testImplementation 'ch.qos.logback:logback-classic:1.2.6'
+    testImplementation 'org.slf4j:jcl-over-slf4j:1.7.25'
+    testImplementation project(path: ':')
+    testCompileOnly 'org.projectlombok:lombok:1.18.28'
+    testAnnotationProcessor'org.projectlombok:lombok:1.18.28'
+
+    // Application testing
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    testImplementation 'org.junit.vintage:junit-vintage-engine:5.9.3'
+
+    // Environment
+    testImplementation "org.springframework:spring-context:${springVersion}"
+    testImplementation "org.springframework:spring-test:${springVersion}"
+    testImplementation "org.spockframework:spock-spring:${spockVersion}"
+    testImplementation "org.springframework:spring-webflux:${springWebFluxVersion}"
+    testImplementation "io.projectreactor.netty:reactor-netty:${nettyVersion}"
+    implementation "io.projectreactor:reactor-core:${reactorVersion}"
+
+    // Spock
+    testImplementation platform("org.apache.groovy:groovy-bom:${groovyVersion}")
+    testImplementation "org.apache.groovy:groovy"
+    testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
+    testImplementation "org.spockframework:spock-core"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

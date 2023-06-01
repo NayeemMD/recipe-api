@@ -1,0 +1,7 @@
+POST {{host}}/users/aclrw-test
+Content-Type: application/json
+Accept: application/com.food.recipe.v1+json
+
+{
+
+}

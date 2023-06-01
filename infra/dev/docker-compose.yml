@@ -1,0 +1,13 @@
+services:
+  db:
+    image: mysql:latest
+    command: --max_allowed_packet=1024M
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./mysql-scripts:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_USER: sa
+      MYSQL_PASSWORD: sa
+      MYSQL_DATABASE: exercise
